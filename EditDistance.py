@@ -16,8 +16,9 @@ import string
 import sys
 
 class EditDistanceFinder():
-    DEL, SUB, INS = range(3)
+    DEL, SUB, INS, SW= range(4)
     BLANK = '%'
+    TRANS = '~'
     def __init__(self):
         self.probs = defaultdict(lambda: defaultdict(float))
 
@@ -61,13 +62,24 @@ class EditDistanceFinder():
         counts = defaultdict(Counter) 
         self.probs = defaultdict(lambda: defaultdict(float))
 
-        alphabet = string.ascii_lowercase + "unk" + "%"
+        alphabet = [a for a in string.ascii_lowercase] + ["unk", "%"]
 
         for a in alphabet:
             for b in alphabet:
                 counts[a][b] += .1
+
+        for i in range(len(string.ascii_lowercase)):
+            for j in range(i+1,len(string.ascii_lowercase)):
+                switch = (string.ascii_lowercase[i], string.ascii_lowercase[j])
+                counts[self.TRANS][switch] += .1
+                switch = (string.ascii_lowercase[j], string.ascii_lowercase[i])
+                counts[self.TRANS][switch] += .1
         
         for observed_char, intended_char in alignments:
+            if type(observed_char) == str and observed_char not in string.ascii_lowercase:
+                observed_char = 'unk'
+            if type(intended_char) == str and intended_char not in string.ascii_lowercase:
+                intended_char = 'unk'
             counts[intended_char][observed_char] += 1
 
         for intended_char, counter in counts.items():
@@ -97,8 +109,18 @@ class EditDistanceFinder():
                 this_ins = (table['cost'][i-1,j] + self.ins_cost(observed_word[i-1]), self.INS)
                 this_del = (table['cost'][i,j-1] + self.del_cost(intended_word[j-1]), self.DEL)
                 this_sub = (table['cost'][i-1,j-1] + self.sub_cost(observed_word[i-1], intended_word[j-1]), self.SUB)
-                
-                table[i,j] = min((this_del, this_sub, this_ins))
+
+                this_sw = (float('inf'), self.SW)
+                if i >= 2 and j >= 2 and observed_word[i-1] in\
+                    string.ascii_lowercase and observed_word[i-2] in\
+                    string.ascii_lowercase and intended_word[j-1] in\
+                    string.ascii_lowercase and intended_word[j-2] in\
+                    string.ascii_lowercase and observed_word[i-1] !=\
+                    observed_word[i-2] and observed_word[i-1] == intended_word[j-2] and\
+                    observed_word[i-2] == intended_word[j-1]:
+                        this_sw = (table['cost'][i-2,j-2] + self.probs[self.TRANS][(observed_word[i-2],observed_word[i-2])], self.SW)
+
+                table[i,j] = min((this_del, this_sub, this_ins, this_sw))
                 
         return table
     
@@ -118,16 +140,29 @@ class EditDistanceFinder():
             elif this_backtrace == self.DEL:
                 j -= 1
                 alignments.append((self.BLANK, intended_word[j]))
+            elif this_backtrace == self.SW:
+                i -= 2
+                j -= 2
+                alignments.append((self.TRANS, (observed_word[i-1], observed_word[i])))
 
         return list(reversed(alignments))
+
     
     def del_cost(self, char):
+        if char not in string.ascii_lowercase:
+            char = 'unk'
         return 1-self.probs[char][self.BLANK]
     
     def ins_cost(self, char):
+        if char not in string.ascii_lowercase:
+            char = 'unk'
         return 1-self.probs[self.BLANK][char]
     
     def sub_cost(self, observed_char, intended_char):
+        if observed_char not in string.ascii_lowercase:
+            observed_char = 'unk'
+        if intended_char not in string.ascii_lowercase:
+            intended_char = 'unk'
         if observed_char == intended_char: return 0
         else: return 1-self.probs[intended_char][observed_char]
         
@@ -147,10 +182,10 @@ class EditDistanceFinder():
         for observed_char, intended_char in alignment:
             intd = intended_char if intended_char in self.probs else "unk"
             obsv = observed_char if observed_char in self.probs[intd] else "unk"
-            try: 
+            try:
                 total_prob += log(self.probs[intd][obsv])
             except:
-                print(observed_word, intended_word)
+                import ipdb;ipdb.set_trace()
                 sys.exit("Problem with {} and {}".format(intd, obsv))
         return total_prob
         

@@ -1,0 +1,16 @@
+../data/Data/gutenberg/austen-emma.txt
+../data/Data/gutenberg/austen-persuasion.txt
+../data/Data/gutenberg/austen-sense.txt
+../data/Data/gutenberg/bible-kjv.txt
+../data/Data/gutenberg/blake-poems.txt
+../data/Data/gutenberg/bryant-stories.txt
+../data/Data/gutenberg/burgess-busterbrown.txt
+../data/Data/gutenberg/carroll-alice.txt
+../data/Data/gutenberg/chesterton-brown.txt
+../data/Data/gutenberg/chesterton-thursday.txt
+../data/Data/gutenberg/edgeworth-parents.txt
+../data/Data/gutenberg/melville-moby_dick.txt
+../data/Data/gutenberg/milton-paradise.txt
+../data/Data/gutenberg/shakespeare-hamlet.txt
+../data/Data/gutenberg/shakespeare-macbeth.txt
+../data/Data/gutenberg/whitman-leaves.txt

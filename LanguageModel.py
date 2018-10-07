@@ -16,7 +16,7 @@ import argparse
 
 nlp_full = spacy.load('en', pipeline=['tagger','parser'])
 nlp_basic = spacy.load('en', pipeline=[])
-wordRE = re.compile(r'\w')
+wordRE = re.compile(r'^[a-zA-Z]+$')
 
 class LanguageModel():
     def __init__(self, alpha=0.1, max_vocab = 40000):
@@ -82,6 +82,8 @@ class LanguageModel():
                     self.bigrams[w1].update([w2])
         
     def bigram_prob(self, w1, w2):
+        w1 = w1.lower()
+        w2 = w2.lower()
         first_word = w1 if w1 in self else "UNK"
         second_word = w2 if w2 in self else "UNK"
         numerator = self.bigrams[first_word][second_word] + self.alpha
@@ -89,6 +91,7 @@ class LanguageModel():
         return log(numerator / denominator)
 
     def unigram_prob(self, w):
+        w = w.lower()
         word = w if w in self else "UNK"
         numerator = self.unigrams[word] + self.alpha
         denominator = sum(self.unigrams.values()) + (self.alpha * self.V)
